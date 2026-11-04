@@ -1,0 +1,695 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperOS 3 Simulator</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, "Segoe UI", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #080a13;
+  color: white;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* WALLPAPER */
+.wallpaper {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 75% 25%, #ff9bba 0%, transparent 35%),
+    radial-gradient(ellipse at 25% 70%, #7762ff 0%, transparent 40%),
+    linear-gradient(145deg,#151d43,#292d66 45%,#080e23);
+  transition: .6s;
+  z-index: -2;
+}
+
+.wallpaper::after {
+  content: "";
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#ff9dcb,#8b75ff);
+  filter: blur(65px);
+  top: 30%;
+  left: 30%;
+  opacity: .35;
+  animation: float 8s infinite alternate ease-in-out;
+}
+
+@keyframes float {
+  from { transform: translate(-50px,-30px) scale(.9); }
+  to { transform: translate(70px,50px) scale(1.2); }
+}
+
+/* STATUS BAR */
+.status {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 40px;
+  padding: 12px 25px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  z-index: 20;
+}
+
+.status-icons {
+  display: flex;
+  gap: 8px;
+}
+
+/* LOCK SCREEN */
+.lock {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  text-align: center;
+  padding-top: 115px;
+  backdrop-filter: blur(0px);
+  transition: .7s;
+}
+
+.lock.hide {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.lock-time {
+  font-size: 82px;
+  font-weight: 300;
+  letter-spacing: -5px;
+}
+
+.lock-date {
+  font-size: 16px;
+  opacity: .85;
+  margin-top: 5px;
+}
+
+.unlock-hint {
+  position: absolute;
+  bottom: 55px;
+  width: 100%;
+  font-size: 13px;
+  opacity: .8;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  50% { opacity: .3; }
+}
+
+/* HOME SCREEN */
+.home {
+  height: 100%;
+  padding: 75px 23px 45px;
+  opacity: 0;
+  transform: scale(1.08);
+  transition: .6s;
+}
+
+.home.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.widget {
+  padding: 20px;
+  border-radius: 28px;
+  background: #ffffff20;
+  backdrop-filter: blur(30px);
+  border: 1px solid #ffffff25;
+  margin-bottom: 20px;
+}
+
+.widget-time {
+  font-size: 47px;
+  font-weight: 300;
+}
+
+.widget-date {
+  font-size: 13px;
+  opacity: .7;
+}
+
+.weather {
+  float: right;
+  text-align: right;
+  font-size: 25px;
+}
+
+.weather small {
+  display: block;
+  font-size: 12px;
+}
+
+.apps {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 25px 15px;
+  margin-top: 30px;
+}
+
+.app {
+  text-align: center;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.app:active {
+  transform: scale(.8);
+}
+
+.app-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 19px;
+  display: grid;
+  place-items: center;
+  font-size: 27px;
+  margin: auto auto 7px;
+  background: #ffffff25;
+  backdrop-filter: blur(20px);
+  border: 1px solid #ffffff30;
+  box-shadow: 0 8px 25px #0002;
+}
+
+.app-name {
+  font-size: 11px;
+}
+
+.dock {
+  position: absolute;
+  bottom: 28px;
+  left: 20px;
+  right: 20px;
+  padding: 12px;
+  border-radius: 28px;
+  background: #ffffff25;
+  backdrop-filter: blur(30px);
+  display: flex;
+  justify-content: space-around;
+}
+
+/* APP WINDOW */
+.app-window {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: #f0f0f5;
+  color: #171820;
+  transform: translateY(100%);
+  transition: .45s cubic-bezier(.2,.8,.2,1);
+  padding: 55px 23px;
+  border-radius: 35px 35px 0 0;
+}
+
+.app-window.open {
+  transform: translateY(0);
+}
+
+.close-app {
+  position: absolute;
+  top: 15px;
+  right: 22px;
+  border: 0;
+  background: #ddd;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 20px;
+}
+
+.app-content {
+  margin-top: 35px;
+}
+
+/* CONTROL CENTER */
+.control {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  padding: 55px 20px;
+  background: #111625dd;
+  backdrop-filter: blur(45px);
+  transform: translateY(-110%);
+  transition: .5s cubic-bezier(.2,.8,.2,1);
+  overflow-y: auto;
+}
+
+.control.open {
+  transform: translateY(0);
+}
+
+.control h2 {
+  font-size: 28px;
+  margin-bottom: 25px;
+}
+
+.cc-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 12px;
+}
+
+.tile {
+  background: #ffffff20;
+  border: 1px solid #ffffff18;
+  padding: 22px 15px;
+  border-radius: 23px;
+  min-height: 90px;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.tile.active {
+  background: #c2c8ff;
+  color: #181a32;
+}
+
+.tile span {
+  display: block;
+  font-size: 23px;
+  margin-bottom: 8px;
+}
+
+.tile small {
+  font-size: 12px;
+}
+
+.slider {
+  margin-top: 22px;
+  background: #ffffff20;
+  padding: 20px;
+  border-radius: 23px;
+}
+
+input[type=range] {
+  width: 100%;
+  accent-color: #b8c3ff;
+  margin-top: 15px;
+}
+
+/* NOTIFICATION */
+.notification {
+  position: fixed;
+  z-index: 60;
+  top: 50px;
+  left: 15px;
+  right: 15px;
+  padding: 17px;
+  border-radius: 22px;
+  background: #ffffffdf;
+  color: #151525;
+  backdrop-filter: blur(25px);
+  transform: translateY(-150%);
+  transition: .4s;
+}
+
+.notification.show {
+  transform: translateY(0);
+}
+
+/* NAVIGATION */
+.navbar {
+  position: fixed;
+  bottom: 8px;
+  left: 38%;
+  width: 24%;
+  height: 5px;
+  border-radius: 20px;
+  background: white;
+  z-index: 70;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ANIMATION */
+@keyframes pop {
+  from {opacity:0; transform:scale(.8);}
+  to {opacity:1; transform:scale(1);}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wallpaper"></div>
+
+<!-- STATUS -->
+<div class="status">
+  <span id="statusTime">09:41</span>
+  <div class="status-icons">
+    <span>◉</span>
+    <span>⌁</span>
+    <span>▰</span>
+    <span>🔋</span>
+  </div>
+</div>
+
+<!-- LOCK SCREEN -->
+<div class="lock" id="lock" onclick="unlock()">
+  <div class="lock-time" id="lockTime">09:41</div>
+  <div class="lock-date" id="lockDate">Wednesday, November 4</div>
+  <div class="unlock-hint">↑ Geser atau ketuk untuk membuka</div>
+</div>
+
+<!-- HOME -->
+<div class="home" id="home">
+
+  <div class="widget">
+    <div class="weather">
+      ☀️
+      <small>Cuaca cerah</small>
+      <small>28°C</small>
+    </div>
+
+    <div class="widget-time" id="homeTime">09:41</div>
+    <div class="widget-date" id="homeDate">Wednesday, November 4</div>
+  </div>
+
+  <div class="apps">
+
+    <div class="app" onclick="openApp('Telepon','📞')">
+      <div class="app-icon">📞</div>
+      <div class="app-name">Telepon</div>
+    </div>
+
+    <div class="app" onclick="openApp('Pesan','💬')">
+      <div class="app-icon">💬</div>
+      <div class="app-name">Pesan</div>
+    </div>
+
+    <div class="app" onclick="openApp('Galeri','🌄')">
+      <div class="app-icon">🌄</div>
+      <div class="app-name">Galeri</div>
+    </div>
+
+    <div class="app" onclick="openApp('Kamera','📷')">
+      <div class="app-icon">📷</div>
+      <div class="app-name">Kamera</div>
+    </div>
+
+    <div class="app" onclick="openApp('Pengaturan','⚙️')">
+      <div class="app-icon">⚙️</div>
+      <div class="app-name">Setelan</div>
+    </div>
+
+    <div class="app" onclick="openApp('Musik','🎵')">
+      <div class="app-icon">🎵</div>
+      <div class="app-name">Musik</div>
+    </div>
+
+    <div class="app" onclick="openApp('Browser','🌐')">
+      <div class="app-icon">🌐</div>
+      <div class="app-name">Browser</div>
+    </div>
+
+    <div class="app" onclick="openApp('Jam','⏰')">
+      <div class="app-icon">⏰</div>
+      <div class="app-name">Jam</div>
+    </div>
+
+  </div>
+
+  <div class="dock">
+    <div class="app-icon" onclick="openApp('Telepon','📞')">📞</div>
+    <div class="app-icon" onclick="openApp('Browser','🌐')">🌐</div>
+    <div class="app-icon" onclick="openApp('Kamera','📷')">📷</div>
+    <div class="app-icon" onclick="openApp('Galeri','🌄')">🌄</div>
+  </div>
+
+</div>
+
+<!-- APP WINDOW -->
+<div class="app-window" id="appWindow">
+  <button class="close-app" onclick="closeApp()">×</button>
+  <h1 id="appTitle">Aplikasi</h1>
+  <div class="app-content" id="appContent"></div>
+</div>
+
+<!-- CONTROL CENTER -->
+<div class="control" id="control">
+  <h2>Control Center</h2>
+
+  <div style="opacity:.7;margin-bottom:20px" id="ccDate"></div>
+
+  <div class="cc-grid">
+
+    <div class="tile active" onclick="toggleTile(this)">
+      <span>📶</span>
+      Wi-Fi
+      <small>Terhubung</small>
+    </div>
+
+    <div class="tile" onclick="toggleTile(this)">
+      <span>ᛒ</span>
+      Bluetooth
+      <small>Nonaktif</small>
+    </div>
+
+    <div class="tile" onclick="toggleTile(this)">
+      <span>✈️</span>
+      Mode Pesawat
+      <small>Nonaktif</small>
+    </div>
+
+    <div class="tile" onclick="toggleTile(this)">
+      <span>🌙</span>
+      Jangan Ganggu
+      <small>Nonaktif</small>
+    </div>
+
+    <div class="tile" onclick="toggleTile(this)">
+      <span>📍</span>
+      Lokasi
+      <small>Aktif</small>
+    </div>
+
+    <div class="tile" onclick="toggleTile(this)">
+      <span>🔋</span>
+      Hemat Baterai
+      <small>Nonaktif</small>
+    </div>
+
+  </div>
+
+  <div class="slider">
+    ☀️ Kecerahan
+    <input type="range" min="10" max="100" value="80"
+    oninput="brightness(this.value)">
+  </div>
+
+  <div class="slider">
+    🔊 Volume
+    <input type="range" min="0" max="100" value="60">
+  </div>
+
+  <button onclick="closeControl()"
+  style="margin-top:25px;padding:14px 25px;border:0;border-radius:20px">
+    Tutup Control Center
+  </button>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification">
+  <b>HyperOS System</b>
+  <p>Selamat datang di HyperOS 3 Simulator!</p>
+</div>
+
+<div class="navbar" onclick="homeAction()"></div>
+
+<script>
+
+// REAL TIME CLOCK
+function updateClock() {
+  const now = new Date();
+
+  const time = now.toLocaleTimeString('id-ID',{
+    hour:'2-digit',
+    minute:'2-digit'
+  });
+
+  const date = now.toLocaleDateString('id-ID',{
+    weekday:'long',
+    day:'numeric',
+    month:'long'
+  });
+
+  document.getElementById('lockTime').textContent = time;
+  document.getElementById('homeTime').textContent = time;
+  document.getElementById('statusTime').textContent = time;
+  document.getElementById('lockDate').textContent = date;
+  document.getElementById('homeDate').textContent = date;
+  document.getElementById('ccDate').textContent = date;
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+// UNLOCK
+function unlock() {
+  document.getElementById('lock').classList.add('hide');
+  document.getElementById('home').classList.add('show');
+}
+
+// APP SYSTEM
+function openApp(name,icon) {
+
+  const win = document.getElementById('appWindow');
+
+  document.getElementById('appTitle').textContent =
+  icon + ' ' + name;
+
+  const content = document.getElementById('appContent');
+
+  if(name === 'Pengaturan') {
+    content.innerHTML = `
+      <h2>Pengaturan</h2>
+      <br>
+      <p>📶 Wi-Fi</p><br>
+      <p>ᛒ Bluetooth</p><br>
+      <p>🎨 Wallpaper & Personalisasi</p><br>
+      <p>🔊 Suara & Getaran</p><br>
+      <p>🔋 Baterai</p><br>
+      <p>📱 Tentang Ponsel</p>
+      <br><hr><br>
+      <h3>HyperOS 3</h3>
+      <p>UI Simulator</p>
+    `;
+  }
+
+  else if(name === 'Galeri') {
+    content.innerHTML = `
+      <h2>Galeri</h2><br>
+      <div style="font-size:70px">🌄 🌅 🌌</div>
+      <p>Belum ada foto.</p>
+    `;
+  }
+
+  else if(name === 'Kamera') {
+    content.innerHTML = `
+      <h2>Kamera</h2><br>
+      <div style="background:#222;height:300px;
+      border-radius:25px;display:grid;place-items:center;
+      color:white;font-size:50px">📷</div>
+      <br><button onclick="notify('Kamera simulasi')">
+      Ambil Foto</button>
+    `;
+  }
+
+  else if(name === 'Jam') {
+    content.innerHTML = `
+      <h2>Jam Digital</h2>
+      <br><div style="font-size:60px" id="appClock"></div>
+      <p>Waktu perangkat</p>
+    `;
+    setInterval(() => {
+      const el = document.getElementById('appClock');
+      if(el) el.textContent = new Date().toLocaleTimeString('id-ID');
+    },1000);
+  }
+
+  else {
+    content.innerHTML = `
+      <div style="text-align:center;padding:60px 10px">
+        <div style="font-size:80px">${icon}</div>
+        <h2>${name}</h2>
+        <p style="margin-top:15px;color:#777">
+        Aplikasi simulasi HyperOS 3
+        </p>
+      </div>
+    `;
+  }
+
+  win.classList.add('open');
+}
+
+function closeApp() {
+  document.getElementById('appWindow').classList.remove('open');
+}
+
+// CONTROL CENTER
+function toggleTile(el) {
+  el.classList.toggle('active');
+}
+
+function closeControl() {
+  document.getElementById('control').classList.remove('open');
+}
+
+function brightness(value) {
+  document.querySelector('.wallpaper').style.filter =
+  `brightness(${value/80})`;
+}
+
+// NOTIFICATION
+function notify(message) {
+  const n = document.getElementById('notification');
+  n.querySelector('p').textContent = message;
+  n.classList.add('show');
+
+  setTimeout(() => {
+    n.classList.remove('show');
+  },3000);
+}
+
+// SWIPE GESTURES
+let startY = 0;
+
+document.addEventListener('touchstart',e => {
+  startY = e.touches[0].clientY;
+},{passive:true});
+
+document.addEventListener('touchend',e => {
+  let endY = e.changedTouches[0].clientY;
+  let diff = endY - startY;
+
+  if(startY < 70 && diff > 80) {
+    document.getElementById('control').classList.add('open');
+  }
+
+  if(startY > 200 && diff < -100) {
+    closeControl();
+    unlock();
+  }
+},{passive:true});
+
+// HOME BUTTON
+function homeAction() {
+  closeApp();
+  closeControl();
+  unlock();
+}
+
+// DOUBLE CLICK STATUS BAR
+document.querySelector('.status').addEventListener('click',()=>{
+  document.getElementById('control').classList.add('open');
+});
+
+// WELCOME
+setTimeout(()=>{
+  notify('HyperOS 3 Simulator siap digunakan!');
+},1500);
+
+</script>
+
+</body>
+</html>
